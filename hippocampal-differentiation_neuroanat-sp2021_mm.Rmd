@@ -16,7 +16,7 @@ library(gridExtra)
 library(reshape2)
 library(tableone)
 
-df <- read.csv("~/Box/CogNeuroLab/Aging Decision Making R01/data/dataset_2020-10-10.csv")
+df <- read.csv("/Users/mcmahonmc/Library/CloudStorage/Box-Box/CogNeuroLab/Aging Decision Making R01/data/dataset_2020-10-10.csv")
 vol <- read.csv("/Volumes/schnyer/Megan/hippocampal-differentiation_neuroanat_spring-2021/proj-6051536f38fe127a89efe276/stats_vol_full.csv")
 
 vol$record_id <- substr(vol$Subject, 5, 10)
