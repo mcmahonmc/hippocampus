@@ -283,19 +283,43 @@ dmem <- dmem %>%
 ```
 
 ```{r}
+dmem %>%
+  filter(acc_mean.test > 0.50) %>%
+  filter(acc_mean.learning > 0.33) %>%
+  filter(Group == "Older Adults") %>%
+  select(cvlt_1, cvlt_listb, cvlt_sdelay_recall, cvlt_ldelay_recall, cvlt_recognition_hits) %>%
+  pivot_longer(cols = c('cvlt_1', 'cvlt_sdelay_recall', 'cvlt_listb', 'cvlt_ldelay_recall', 'cvlt_recognition_hits'), names_to = 'CVLT Measure', values_to = 'Raw Score') %>%
+  ggplot(aes(x=`Raw Score`)) + geom_density(size=2) + facet_wrap(~ `CVLT Measure` ) + theme_classic()
+```
+
+```{r}
+dmem$tx_cvlt_ldelay_recall <- log10(dmem$cvlt_ldelay_recall)
+dmem$tx_cvlt_sdelay_recall <- log10(dmem$cvlt_sdelay_recall)
+
+dmem %>%
+  filter(acc_mean.test > 0.50) %>%
+  filter(acc_mean.learning > 0.33) %>%
+  filter(Group == "Older Adults") %>%
+  select(tx_cvlt_sdelay_recall, tx_cvlt_ldelay_recall) %>%
+  pivot_longer(cols = c('tx_cvlt_sdelay_recall', 'tx_cvlt_ldelay_recall'), names_to = 'CVLT Measure', values_to = 'Raw Score') %>%
+  ggplot(aes(x=`Raw Score`)) + geom_density(size=2) + facet_wrap(~ `CVLT Measure` ) + theme_classic()
+```
+
+
+```{r}
 
 dmem %>%
   filter(acc_mean.test > 0.50) %>%
   filter(acc_mean.learning > 0.33) %>%
   rename(`Head` = Hippocampal_head) %>%
   rename(`Tail` = Hippocampal_tail) %>%
-  melt(id.vars = c('record_id', 'Group', 'cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits'), measure.vars = c('Head', 'Tail'), variable.name = 'Hippocampal region', value.name = 'Hippocampal subregion volume') %>%
-  melt(id.vars = c('record_id', 'Group', 'Hippocampal region', 'Hippocampal subregion volume', 'cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits'), measure.vars = c('cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits'), variable.name = 'CVLT Measure', value.name = 'Raw Score') %>%
+  pivot_longer(cols=c("Head", "Tail"), names_to = 'Hippocampal region', values_to = 'Hippocampal subregion volume') %>%
+  pivot_longer(cols=contains("tx_cvlt"), names_to = 'CVLT Measure', values_to = 'Raw Score') %>%
   ggplot(aes(x = `Hippocampal subregion volume`, y = `Raw Score`, group = Group, color = Group)) +
   geom_point() + 
   stat_smooth(method = "lm", formula = 'y ~ x') +
   scale_color_brewer(palette = 'Set1') + theme_minimal() + theme(legend.position = "none") +
-  facet_grid(`Hippocampal region` ~ `CVLT Measure`, scales = 'free_x', space = "free") + 
+  facet_grid(`Hippocampal region` ~ `CVLT Measure`, scales = 'free', space = "free") + 
   ylab("Raw Score") + ggtitle("Hippocampal subregion volume and CVLT performance")
 
 ```
@@ -303,15 +327,50 @@ dmem %>%
 ## Sleep and CVLT performance
 
 ```{r}
+dmem %>%
+  melt(id.vars = c('record_id', 'Group', 'cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'sleep_time_mean_sleep', 'actamp'), measure.vars = c('cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'tx_cvlt_sdelay_recall', 'tx_cvlt_ldelay_recall'), variable.name = 'CVLT Measure', value.name = 'Raw Score') %>%
+  ggplot(aes(x = actamp, y = `Raw Score`, group = Group, color = Group)) +
+  geom_point() + 
+  stat_smooth(method = "lm", formula = 'y ~ x') +
+  facet_grid(. ~ `CVLT Measure`, scales = 'free') + 
+  scale_color_brewer(palette = 'Set1') + theme_minimal() + 
+  xlab("Amplitude")
 
 dmem %>%
-  melt(id.vars = c('record_id', 'Group', 'cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'sleep_time_mean_sleep', 'actphi'), measure.vars = c('cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits'), variable.name = 'CVLT Measure', value.name = 'Raw Score') %>%
+  melt(id.vars = c('record_id', 'Group', 'cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'sleep_time_mean_sleep', 'IS'), measure.vars = c('cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'tx_cvlt_sdelay_recall', 'tx_cvlt_ldelay_recall'), variable.name = 'CVLT Measure', value.name = 'Raw Score') %>%
+  ggplot(aes(x = IS, y = `Raw Score`, group = Group, color = Group)) +
+  geom_point() + 
+  stat_smooth(method = "lm", formula = 'y ~ x') +
+  facet_grid(. ~ `CVLT Measure`, scales = 'free') + 
+  scale_color_brewer(palette = 'Set1') + theme_minimal() + 
+  xlab("IS")
+
+dmem %>%
+  melt(id.vars = c('record_id', 'Group', 'cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'sleep_time_mean_sleep', 'actphi'), measure.vars = c('cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'tx_cvlt_sdelay_recall', 'tx_cvlt_ldelay_recall'), variable.name = 'CVLT Measure', value.name = 'Raw Score') %>%
   ggplot(aes(x = actphi, y = `Raw Score`, group = Group, color = Group)) +
   geom_point() + 
   stat_smooth(method = "lm", formula = 'y ~ x') +
   facet_grid(. ~ `CVLT Measure`, scales = 'free') + 
   scale_color_brewer(palette = 'Set1') + theme_minimal() + 
   xlab("Acrophase")
+
+dmem %>%
+  melt(id.vars = c('record_id', 'Group', 'cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'sleep_time_mean_sleep', 'total_ac_mean_active'), measure.vars = c('cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'tx_cvlt_sdelay_recall', 'tx_cvlt_ldelay_recall'), variable.name = 'CVLT Measure', value.name = 'Raw Score') %>%
+  ggplot(aes(x = total_ac_mean_active, y = `Raw Score`, group = Group, color = Group)) +
+  geom_point() + 
+  stat_smooth(method = "lm", formula = 'y ~ x') +
+  facet_grid(. ~ `CVLT Measure`, scales = 'free') + 
+  scale_color_brewer(palette = 'Set1') + theme_minimal() + 
+  xlab("Mean Daily Activity")
+
+dmem %>%
+  melt(id.vars = c('record_id', 'Group', 'cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'sleep_time_mean_sleep', 'actamp'), measure.vars = c('cvlt_1', 'cvlt_sdelay_recall', 'cvlt_ldelay_recall', 'cvlt_recognition_hits', 'sleep_time_mean_sleep', 'tx_cvlt_ldelay_recall'), variable.name = 'CVLT Measure', value.name = 'Raw Score') %>%
+  ggplot(aes(x = sleep_time_mean_sleep, y = `Raw Score`, group = Group, color = Group)) +
+  geom_point() + 
+  stat_smooth(method = "lm", formula = 'y ~ x') +
+  facet_grid(. ~ `CVLT Measure`, scales = 'free') + 
+  scale_color_brewer(palette = 'Set1') + theme_minimal() + 
+  xlab("TST")
 
 ```
 
@@ -336,7 +395,7 @@ dmem %>%
   facet_wrap(HippocampalRegion ~ TaskPhase, scales = 'free') + 
   scale_color_brewer(palette = 'Set1') + theme_minimal() 
   
-  dmem %>%
+dmem %>%
   filter(acc_mean.test > 0.50) %>%
   filter(acc_mean.learning > 0.33) %>%
   rename(`Head` = Hippocampal_head) %>%
