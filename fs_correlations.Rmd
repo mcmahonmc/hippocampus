@@ -1,0 +1,132 @@
+---
+title: "Subcortical volumes and rest-activity rhythms"
+author: "Megan McMahon"
+date: "3/9/2021"
+output: html_document
+---
+
+This analysis uses data from our NIA study. Here we are looking at hippocampal volume derived from the Freesurfer fsaverage5 parcellation in relation to aspects of rest-activity rhythms in both younger and older adults.
+
+We use an an adjusted HC volume as documented in [Brehmer et al. (2020)](https://doi.org/10.1016/j.neuroimage.2019.116475)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(tidyverse)
+library(Hmisc)
+library(ggcorrplot)
+
+```
+
+```{r}
+df <- read.csv("data/dataset_2020-10-10.csv")
+d0 <- readr::read_delim('data/aseg_vol_table.txt', delim = '\t')
+mem <- read.csv('data/mem_results_06-2021.csv')
+
+d0$record_id <- substr(d0$`Measure:volume`, 5, 10)
+d0$record_id
+colnames(d0) <- make.names(colnames(d0))
+d <- d0
+
+ICVnorm <- function(d, x){
+  
+  f <- paste(x, "~ EstimatedTotalIntraCranialVol")
+  print(f)
+  b <- as.numeric((lm(f, d))$coefficients[2])
+  d[x] = d[x] - b * (d$EstimatedTotalIntraCranialVol - mean(d$EstimatedTotalIntraCranialVol, na.rm = TRUE))
+  
+  return(d)
+}
+
+cols <- names(d[,grepl("hippoc|Hippoc|CA|Left", names(d))])
+
+for (col in cols){
+  d <- ICVnorm(d, col)
+}
+
+df1 <- merge(df, d, by = 'record_id', all = TRUE)
+
+```
+
+```{r}
+cor <- df1 %>%
+  select(actamp, actphi, actmin, actbeta, actalph, fact, IS, IV, RA, sleep_time_mean_sleep, total_ac_mean_active, starts_with("Left")) %>%
+  select(-contains("WM")) %>%
+  as.matrix() %>%
+  rcorr(type = "spearman") 
+
+ggcorrplot(cor$r, type="upper", p.mat = cor$P, sig.level = 0.01, insig = "blank")
+
+ggsave("figures/bigcorrelationplot.png", dpi=300, width=15, height=15, units = "in")
+```
+
+```{r}
+cor <- df1 %>%
+  filter(Group == "Older Adults") %>%
+  select(actamp, actphi, actmin, actbeta, actalph, fact, IS, IV, RA, sleep_time_mean_sleep, total_ac_mean_active, starts_with("Left")) %>%
+  select(-contains("WM")) %>%
+  as.matrix() %>%
+  rcorr(type = "spearman") 
+
+ggcorrplot(cor$r, type="upper", p.mat = cor$P, sig.level = 0.01, insig = "blank")
+
+ggsave("figures/bigcorrelationplot_OA.png", dpi=300, width=15, height=15, units = "in")
+
+```
+
+```{r}
+cor <- df1 %>%
+  filter(Group == "Young Adults") %>%
+  select(actamp, actphi, actmin, actbeta, actalph, fact, IS, IV, RA, sleep_time_mean_sleep, total_ac_mean_active, starts_with("Left")) %>%
+  select(-contains("WM")) %>%
+  as.matrix() %>%
+  rcorr(type = "spearman") 
+
+ggcorrplot(cor$r, type="upper", p.mat = cor$P, sig.level = 0.01, insig = "blank")
+
+ggsave("figures/bigcorrelationplot_YA.png", dpi=300, width=15, height=15, units = "in")
+
+```
+
+```{r}
+cor <- df1 %>%
+  select(cvlt_zscore, cvlt_ldelay_recall, cvlt_sdelay_recall, cvlt_listb, cvlt_recognition_hits, cvlt_recognition_fp, contains("Left"))  %>%
+  select(is.numeric) %>% 
+  as.matrix() %>%
+  rcorr(type = "spearman") 
+
+ggcorrplot(cor$r, type="upper", p.mat = cor$P, sig.level = 0.01, insig = "blank")
+
+ggsave("figures/cvltcorrelations.png", dpi=300, width=15, height=15, units = "in")
+
+```
+
+
+```{r}
+dmem <- merge(df1, mem, by = "record_id")
+
+cor <- dmem %>%
+  filter(Group == "Older Adults") %>%
+  select(contains(".learning"), contains(".test"), contains("Left")) %>%
+  select(is.numeric) %>% 
+  as.matrix() %>%
+  rcorr(type = "spearman") 
+
+ggcorrplot(cor$r, type="upper", p.mat = cor$P, sig.level = 0.01, insig = "blank")
+
+ggsave("figures/memmatchcorrelations_OA.png", dpi=300, width=15, height=15, units = "in")
+```
+```{r}
+cor <- dmem %>%
+  filter(Group == "Young Adults") %>%
+  select(contains(".learning"), contains(".test"), contains("Left")) %>%
+  select(is.numeric) %>% 
+  as.matrix() %>%
+  rcorr(type = "spearman") 
+
+ggcorrplot(cor$r, type="upper", p.mat = cor$P, sig.level = 0.01, insig = "blank")
+
+ggsave("figures/memmatchcorrelations_YA.png", dpi=300, width=15, height=15, units = "in")
+
+```
+

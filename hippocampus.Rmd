@@ -15,6 +15,8 @@ library(corrr)
 library(gridExtra)
 library(reshape2)
 library(tableone)
+library(Hmisc)
+library(ggcorrplot)
 
 setwd(getwd())
 
@@ -157,12 +159,16 @@ d %>%
   geom_point() + 
   stat_smooth(method = "loess", formula = 'y ~ x') +
   scale_color_brewer(palette = 'Set1') + theme_minimal() + 
-  facet_wrap(. ~ `Hippocampal region`, scales = 'free') + 
-  theme(legend.position="none") +
-  theme_minimal() 
+  facet_wrap(. ~ `Hippocampal region`, scales = 'free', nrow=3) + 
+  theme_minimal() +
+  theme(legend.position="none", text=element_text(size=14)) + xlab("Age")
+  
+
+ggsave("figures/hcvol_age.png", dpi=300)
 ```
 
 ```{r icv_norm, include = FALSE}
+d0 <- d
 ICVnorm <- function(d, x){
   
   f <- paste(x, "~ EstimatedTotalIntraCranialVol")
@@ -172,7 +178,7 @@ ICVnorm <- function(d, x){
   return(d)
 }
 
-cols <- names(d[,grepl("hippoc|Hippoc|CA", names(d))])
+cols <- names(d[,grepl("hippoc|Hippoc|CA|Left", names(d))])
 
 for (col in cols){
   d <- ICVnorm(d, col)
@@ -199,9 +205,13 @@ d %>%
   geom_point() + 
   stat_smooth(method = "loess", formula = 'y ~ x') +
   scale_color_brewer(palette = 'Set1') + theme_minimal() + 
-  facet_wrap(. ~ `Hippocampal region`, scales = 'free') + 
-  theme(legend.position="none") +
-  theme_minimal()
+  facet_wrap(. ~ `Hippocampal region`, scales = 'free', nrow=3) + 
+  theme_minimal() +
+  theme(legend.position="none", text=element_text(size=14)) + xlab("Age")
+
+
+ggsave("figures/hcvol_age_ICVnorm.png", dpi=300)
+
 ```
 
 ```{r read_mem_data, include = FALSE}
@@ -209,50 +219,6 @@ mem <- read.csv('data/mem_results_06-2021.csv')
 
 head(mem)
 ```
-```
-
-```{r correlations, include = FALSE}
-
-d %>%
-  filter(Group == "Older Adults") %>%
-  select(matches("hippocampal_tail|hippocampal_head"), cvlt_1, cvlt_sdelay_recall, cvlt_ldelay_recall, cvlt_sdelay_cued_recall, cvlt_ldelay_cue_recall, cvlt_ldelay_recall_zscore, cvlt_sdelay_recall_zscore, cvlt_recognition_hits_zscore, cvlt_recognition_fp_zscore) %>%
-  correlate(use="pairwise.complete.obs", method="spearman") %>%
-  rplot(print_cor = TRUE) + theme(axis.text.x = element_text(angle = 90))
-
-#all
-d %>%
-  select(matches("hippocampal_tail|hippocampal_head"), actamp, IS, IV, RA, sleep_time_mean_sleep, total_ac_mean_active) %>%
-  correlate(use="pairwise.complete.obs", method="spearman") %>%
-  rplot(print_cor = TRUE) + theme(axis.text.x = element_text(angle = 90))
-
-
-#older
-d %>%
-  filter(Group == "Older Adults") %>%
-  select(matches("hippocampal_tail|hippocampal_head"), actamp, IS, IV, RA, sleep_time_mean_sleep, total_ac_mean_active) %>%
-  correlate(use="pairwise.complete.obs", method="spearman") %>%
-  rplot(print_cor = TRUE) + theme(axis.text.x = element_text(angle = 90))
-
-#younger
-d %>%
-  filter(Group == "Young Adults") %>%
-  select(matches("hippocampal_tail|hippocampal_head"), actamp, IS, IV, RA, sleep_time_mean_sleep, total_ac_mean_active) %>%
-  correlate(use="pairwise.complete.obs", method="spearman") %>%
-  rplot(print_cor = TRUE) + theme(axis.text.x = element_text(angle = 90))
-
-d %>%
-  filter(Group == "Older Adults") %>%
-  select(matches("Right.CA|Left.CA"), actamp, IS, IV, RA, sleep_time_mean_sleep, total_ac_mean_active) %>%
-  correlate(use="pairwise.complete.obs", method="spearman") %>%
-  rplot(print_cor = TRUE) + theme(axis.text.x = element_text(angle = 90))
-
-d %>%
-  filter(Group == "Young Adults") %>%
-  select(matches("Right.CA|Left.CA"), actamp, IS, IV, RA, sleep_time_mean_sleep, total_ac_mean_active) %>%
-  correlate(use="pairwise.complete.obs", method="spearman") %>%
-  rplot(print_cor = TRUE) + theme(axis.text.x = element_text(angle = 90))
-```
-
 
 ```{r include = FALSE}
 dmem <- merge(d, mem, by = 'record_id')
